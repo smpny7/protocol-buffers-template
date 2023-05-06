@@ -1,0 +1,28 @@
+name: Generate
+
+on:
+  push:
+    branches: main
+
+permissions: write-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Generate Code
+        run: |
+          make clean
+          make mock
+          make build
+      - name: Commit
+        run: |
+          [[ ! $(git diff --exit-code go python typescript) ]] && echo "Nothing to commit." && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull
+          git add go python typescript
+          git commit -m "chore: generate grpc code"
+          git push

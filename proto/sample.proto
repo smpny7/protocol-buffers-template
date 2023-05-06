@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "github.com/smpny7/protocol-buffers-template/go/grpcservice";
+
+service Sample {
+  rpc CreateMessage (CreateMessageRequest) returns (CreateMessageResponse);
+}
+
+message CreateMessageRequest {
+  string contents = 1;
+}
+
+message CreateMessageResponse {
+  string message_id = 1;
+}

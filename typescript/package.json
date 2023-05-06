@@ -1,0 +1,10 @@
+{
+  "name": "@smpny7/protocol-buffers-template",
+  "version": "1.0.0",
+  "repository": "git@github.com:smpny7/protocol-buffers-template.git",
+  "dependencies": {
+    "@improbable-eng/grpc-web": "^0.15.0",
+    "@types/google-protobuf": "^3.15.6",
+    "google-protobuf": "^3.21.2"
+  }
+}

@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      method:
+        type: choice
+        description: バージョンアップの方法を選択してください
+        options:
+          - v1.0.0 → v1.0.1（patch）
+          - v1.0.0 → v1.1.0（minor）
+          - v1.0.0 → v2.0.0（major）
+
+permissions: write-all
+
+env:
+  v1.0.0 → v1.0.1（patch）: patch
+  v1.0.0 → v1.1.0（minor）: minor
+  v1.0.0 → v2.0.0（major）: major
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: kyoh86/git-vertag-action@v1.1
+        with:
+          method: ${{ env[github.event.inputs.method] }}
+          push: true
+
+  go:
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: go module version tag
+        run: |
+          TAG_VERSION=$(git describe --tags --abbrev=0 --match='v*.*.*')
+          MODULE_VERSION=go/$TAG_VERSION
+          git tag $MODULE_VERSION
+          git push origin $MODULE_VERSION
+
+  python:
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: python module version tag
+        run: |
+          TAG_VERSION=$(git describe --tags --abbrev=0 --match='v*.*.*')
+          MODULE_VERSION=python/$TAG_VERSION
+          git tag $MODULE_VERSION
+          git push origin $MODULE_VERSION
+
+  typescript:
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: typescript package version tag
+        id: version
+        run: |
+          PACKAGE_VERSION=$(git describe --tags --abbrev=0 --match='v*.*.*' | sed -e 's/v//')
+          echo "::set-output name=package_version::${PACKAGE_VERSION}"
+      - name: bump version
+        run: |
+          jq '.version|="${{ steps.version.outputs.package_version }}"' typescript/package.json > tmp
+          mv tmp typescript/package.json
+      - name: commit package.json
+        run: |
+          [[ ! $(git diff --exit-code typescript/package.json) ]] && echo "Nothing to commit." && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull
+          git add typescript/package.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.package_version }}"
+          git push
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@smpny7"
+      - run: npm publish
+        working-directory: ./typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
