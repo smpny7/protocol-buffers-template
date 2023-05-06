@@ -1,6 +1,6 @@
 {
   "name": "@smpny7/protocol-buffers-template",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "repository": "git@github.com:smpny7/protocol-buffers-template.git",
   "dependencies": {
     "@improbable-eng/grpc-web": "^0.15.0",
